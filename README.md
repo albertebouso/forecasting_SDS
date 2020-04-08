@@ -1,2 +1,2 @@
-# forecasting_SDS
+# Forecasting competition
 Project for Smart Distribution Systems
