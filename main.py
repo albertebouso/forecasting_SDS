@@ -26,14 +26,13 @@ def _csv_to_data(path, energy, week, start, end):
             df1 = df1.iloc[0:672]
             df1 = df1.LoadFactor
             df1 = df1.to_frame()
-            df = pd.date_range(start, end, freq='15T')
+            df = pd.date_range(start, end, freq='15T', name='time')
             df = df[:-1]
-            df = df1.set_index(df)
-
+            df = df1.set_index(df, 'time')
         else:
             df1 = df1.iloc[0:169]
-            df = pd.date_range(start, end, freq='1H')
-            df = df1.set_index(df)
+            df = pd.date_range(start, end, freq='1H', name='time')
+            df = df1.set_index(df, 'time')
             df = df.rename(columns={'0': 'price'})
     else:
         df = pd.read_csv(path, header=0)
@@ -82,6 +81,7 @@ def _resample_granularity(df, week):
         df = df[:-1]
 
     return df
+
 
 def _correct_NaN(df):
     """
@@ -138,10 +138,12 @@ def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
         df_belpex = _resample_granularity(df_belpex, True)
         df_wind = _correct_NaN(df_wind)
 
-        df_wind = df_wind.iloc[0]
-        df_solar = df_solar.iloc[0]
+        df_wind = df_wind['LoadFactor']
+        df_solar = df_solar['LoadFactor']
 
         data_compact = _get_dataframe(df_wind, df_solar, df_belpex)
+
+
     else:
         df_solar = _csv_to_data(solar_path, True, False, [], [])
         df_wind = _csv_to_data(wind_path, True, False, [], [])
@@ -153,23 +155,30 @@ def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
 
         data_compact = _get_dataframe(df_wind, df_solar, df_belpex)
 
+    data_compact = _normalise_data(data_compact, 'belpex')
+
+    plt.figure()
+    data_compact.belpex.plot(grid=True)
+    plt.show()
+
     return data_compact
 
 
-def _normalised_data(data, column):
+def _normalise_data(data, column):
     """
-    Function to remove outliers, based on a genereic method from statistics independent of timeseries
+    Function to remove outliers, based on a genereic method from statistics, independent of timeseries
 
-    :param data:
+    :param data: dataframe with with 3 columns and datatime index, based on price index
+    :param data: String with column name
 
     :return:
     """
-    col = data.loc[column]
+    col = data[column]
     mean = col.mean()
     std = col.std()
     n_std = 5
     data[column][(col >= mean + n_std * std)] = mean + n_std * std
-    data[column][(col <= mean + n_std * std)] = mean + n_std * std
+    data[column][(col <= mean - n_std * std)] = mean + n_std * std
 
     data_normalised = data
     return data_normalised
@@ -218,8 +227,5 @@ week_2 = csv_to_dataframe(True, 'data/solar_week_2.csv', 'data/wind_week_2.csv',
 week_3 = csv_to_dataframe(True, 'data/solar_week_3.csv', 'data/wind_week_3.csv', 'data/belpex_week_3.csv',
                           start_week, end_week)
 
-print(week_1.head(10))
-print(week_1.tail(10))
 
-print(data.head(10))
-print(data.tail(10))
+
