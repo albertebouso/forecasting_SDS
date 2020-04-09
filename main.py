@@ -9,6 +9,93 @@ from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.model_selection import train_test_split, cross_val_predict, KFold
 
 
+def _csv_to_data(path, energy, week, start, end):
+    """
+
+    :param path: Relative path to the data
+    :param energy: Boolean. True if the variable is energy, False if other
+    :param week: Boolean. True if its week data, False if other
+    :param start: start date of the dataset
+    :param end: ned date of the dataset
+    :return:
+    """
+    if week:
+        df1 = pd.read_csv(path, header=0)
+
+        if energy:
+            df1 = df1.iloc[0:672]
+            df1 = df1.LoadFactor
+            df1 = df1.to_frame()
+            df = pd.date_range(start, end, freq='15T')
+            df = df[:-1]
+            df = df1.set_index(df)
+
+        else:
+            df1 = df1.iloc[0:169]
+            df = pd.date_range(start, end, freq='1H')
+            df = df1.set_index(df)
+            df = df.rename(columns={'0': 'price'})
+    else:
+        df = pd.read_csv(path, header=0)
+        df = df.rename(columns={'Unnamed: 0': 'time'})
+        df['time'] = pd.to_datetime(df['time'])
+        df.set_index('time', inplace=True)
+
+        if energy:
+            df = df.LoadFactor
+
+    return df
+
+
+def _correct_hours(df, start, end):
+    """
+    returns dataframe with price the same as previous hour when data is missing
+
+    :param df: dataframe that needs to be corrected
+    :param start: start date of the dataset
+    :param end: end date of the dataset
+
+    :return:
+    """
+    if df.columns[0] == 'time':
+        dates = pd.date_range(start=start, end=end, freq='1H')
+        for d in dates:
+            try:
+                p = df.loc[d]
+            except KeyError:
+                df.loc[d] = df.loc[d - dt.timedelta(hours=1)]
+        df = df.sort_index()
+        df = df[start:end]
+
+    return df
+
+
+def _resample_granularity(df, week):
+    """
+    Resample the dataframe on a 15 minutes basis
+    :param df:
+    :return:
+    """
+
+    df = df.resample('15T').pad()
+    if week:
+        df = df[:-1]
+
+    return df
+
+def _correct_NaN(df):
+    """
+    Overcomes the problem of Not a Number values by filling the previous valid observation until the next valid one
+
+    :param df: dataframe that needs to be corrected
+
+    :return:
+    """
+    df = df.fillna(method='pad')
+
+    return df
+
+
 def _get_dataframe(wind, solar, price):
     """
     Function which returns a unique dataframe. Useful commands
@@ -27,6 +114,46 @@ def _get_dataframe(wind, solar, price):
     data = pd.DataFrame(index=price.index, data=info)
 
     return data
+
+
+def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
+    """
+    Function which converts 3 csv files, type week or other, into a unique variable
+
+    :param week: Boolean. True if csv is a week, False if not
+    :param solar_path: Relative path to solar data
+    :param wind_path: Relative path to wind data
+    :param price_path: Relative path to Belpex price
+    :param start: Start of the period
+    :param end: End of the period
+
+    :return: datafrarme with 3 columns and datatime index, based on price index
+    """
+    if week:
+        df_solar = _csv_to_data(solar_path, True, True, start, end)
+        df_wind = _csv_to_data(wind_path, True, True, start, end)
+        df_belpex = _csv_to_data(price_path, False, True, start, end)
+
+        df_belpex = _correct_hours(df_belpex, start, end)
+        df_belpex = _resample_granularity(df_belpex, True)
+        df_wind = _correct_NaN(df_wind)
+
+        df_wind = df_wind.iloc[0]
+        df_solar = df_solar.iloc[0]
+
+        data_compact = _get_dataframe(df_wind, df_solar, df_belpex)
+    else:
+        df_solar = _csv_to_data(solar_path, True, False, [], [])
+        df_wind = _csv_to_data(wind_path, True, False, [], [])
+        df_belpex = _csv_to_data(price_path, False, False, [], [])
+
+        df_belpex = _correct_hours(df_belpex, start, end)
+        df_belpex = _resample_granularity(df_belpex, False)
+        df_wind = _correct_NaN(df_wind)
+
+        data_compact = _get_dataframe(df_wind, df_solar, df_belpex)
+
+    return data_compact
 
 
 def _normalised_data(data, column):
@@ -74,114 +201,25 @@ def _get_accuracy(x, y):
     return np.mean(np.abs(x - y)) / np.mean(x)
 
 
-def _csv_to_data(path, energy):
-    """
-    Function for transforming CSV files into pandas dataframe, with two columns: time and value
-
-    :param path: string, relative path to the file
-    :param energy: boolean, True if set is energy, False if else
-
-    :return: table in pandas dataframe format
-    """
-    df = pd.read_csv(path, header=0)
-    if not df.columns[0]:
-        df = df.rename(columns={'Unnamed: 0': 'time'})
-        df['time'] = pd.to_datetime(df['time'])
-        df.set_index('time', inplace=True)
-    if energy:
-        df = df.LoadFactor
-
-    return df
-
-
-def _correct_hours(df, start, end):
-    """
-    returns dataframe with price the same as previous hour when data is missing
-
-    :param df: dataframe that needs to be corrected
-    :param start: start date of the dataset
-    :param end: end date of the dataset
-
-    :return:
-    """
-    if df.columns[0] == 'time':
-        dates = pd.date_range(start=start, end=end, freq='1H')
-        for d in dates:
-            try:
-                p = df.loc[d]
-            except KeyError:
-                df.loc[d] = df.loc[d - dt.timedelta(hours=1)]
-        df = df.sort_index()
-        df = df[start:end]
-
-    return df
-
-
-def _correct_NaN(df):
-    """
-    Overcomes the problem of Not a Number values by filling the previous valid observation until the next valid one
-
-    :param df: dataframe that needs to be corrected
-
-    :return:
-    """
-    df = df.fillna(method='pad')
-
-    return df
-
-
-def _resample_granularity(df):
-    """
-    Resample the dataframe on a 15 minutes basis
-    :param df:
-    :return:
-    """
-    if df.columns[0] == 'time':
-        df = df.resample('15T').pad()
-    elif df.columns[0] == 0:
-        df_temp = pd.DataFrame()
-        for r in range(len(df)):
-            df1 = df.iloc[r]
-            for n in range(3):
-                df_temp = df_temp.append(df1)
-
-            df = df_temp
-    return df
-
-
-def _csv_to_dataframe(solar_path, wind_path, price_path, start, end):
-    """
-    Function for import, treat and create unique dataframe
-
-    :param solar_path: Relative path towards solar data
-    :param wind_path: Relative path towards wind data
-    :param price_path: Relative path towards price data
-    :param start: Start data
-    :param end: End data
-
-    :return:
-    """
-    df_solar = _csv_to_data(solar_path, True)
-    df_wind = _csv_to_data(wind_path, True)
-    df_belpex = _csv_to_data(price_path, False)
-
-    df_belpex = _correct_hours(df_belpex, start, end)
-    df_belpex = _resample_granularity(df_belpex)
-    df_wind = _correct_NaN(df_wind)
-
-    data = _get_dataframe(df_wind, df_solar, df_belpex)
-
-    return data
-
-
-# Initial Conditions
+# Initial conditions
 start_date = dt.datetime(2016, 1, 1)
 end_date = dt.datetime(2017, 12, 31)
+start_week = dt.datetime(2018, 1, 1)
+end_week = dt.datetime(2018, 1, 8)
 
-data = _csv_to_dataframe('data/solar_20162017.csv', 'data/wind_20162017.csv', 'data/belpex_20162017.csv', start_date, end_date)
-# week_1 = _csv_to_dataframe('data/solar_week_1.csv', 'data/wind_week_1.csv', 'data/belpex_week_1.csv', start_date, end_date)
-# week_2 = _csv_to_dataframe('data/solar_week_2.csv', 'data/wind_week_2.csv', 'data/belpex_week_2.csv', start_date, end_date)
-# week_3 = _csv_to_dataframe('data/solar_week_3.csv', 'data/wind_week_3.csv', 'data/belpex_week_3.csv', start_date, end_date)
+# Obtain data in df format
+data = csv_to_dataframe(False, 'data/solar_20162017.csv', 'data/wind_20162017.csv', 'data/belpex_20162017.csv',
+                        start_date, end_date)
+
+week_1 = csv_to_dataframe(True, 'data/solar_week_1.csv', 'data/wind_week_1.csv', 'data/belpex_week_1.csv',
+                          start_week, end_week)
+week_2 = csv_to_dataframe(True, 'data/solar_week_2.csv', 'data/wind_week_2.csv', 'data/belpex_week_2.csv',
+                          start_week,  end_week)
+week_3 = csv_to_dataframe(True, 'data/solar_week_3.csv', 'data/wind_week_3.csv', 'data/belpex_week_3.csv',
+                          start_week, end_week)
 
 print(week_1.head(10))
-print(week_2.tail(10))
+print(week_1.tail(10))
+
+print(data.head(10))
+print(data.tail(10))
