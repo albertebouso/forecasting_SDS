@@ -154,9 +154,9 @@ def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
 
     data_compact = _normalise_data(data_compact, 'belpex')
 
-    plt.figure()
-    data_compact.belpex.plot(grid=True)
-    plt.show()
+    # plt.figure()
+    # data_compact.belpex.plot(grid=True)
+    # plt.show()
 
     return data_compact
 
