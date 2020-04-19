@@ -11,10 +11,11 @@ of the 3 days.
 ## Content
 - ``main`` develops functions for Neural Networks creation, training and performance assessment
 - ``data_manager`` develops all the functions to process, correct and standarize the solar, wind and price data
-
+- ``neural_network`` develops a function with the Neural Network architecture design, as well as training and testing
 
 ## Structure
 - ``/data`` contains all the .csv files provided for the assignment commitment
+- ``/model`` contains the models created by the Neural Network function
 
 ## Report
 The report explain how (and why) the authors selected final features and architecture 
