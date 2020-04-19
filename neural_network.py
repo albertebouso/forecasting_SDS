@@ -6,14 +6,18 @@ from keras.models import Sequential, save_model
 from keras.layers.core import Dense
 from keras.optimizers import RMSprop
 
+check_cv = False
 seed = 0
 np.random.seed(seed=seed)
-n_splits = 2 #10
-neurons = [60, 60] #[168, 108]
-activation_functions = ['relu', 'linear']
+learning_rate = 0.0001
+n_splits = 10
+neurons = [168, 108]
+epochs = 2000
+activation_functions = ['relu', 'relu', 'linear']  # [hidden], output
 shuffle = False
-config = 'random seed = {} \nn_splits ={} \nneurons = {} \nactivation functions = {} \nshuffle = {}'.format(
-    seed, n_splits, neurons, activation_functions, shuffle)
+config = 'random seed = {} \nn_splits = {} \nlearning_rate = {} ' \
+         '\nneurons = {} \nepochs = {} \nactivation_functions = {} \nshuffle = {}'\
+    .format(seed, n_splits, learning_rate, neurons, epochs, activation_functions, shuffle)
 
 
 def create_nn_model(n_div_per_day, X, Y):
@@ -26,33 +30,43 @@ def create_nn_model(n_div_per_day, X, Y):
               hourly data a set of vectors of 216 values must be given (168 values for prices, 24 for wind power
               forecast and 24 for solar power forecast)
     :param Y: A set of vectors with the real belPEX prices for the day right after the week given in X
-    :return:
+    :return: model: stores the trained algorithm
+    :return: path: location of the directory where the model, information about it and its results are going to be
+                    stored.
     '''
     # Neural Network creation and training
     model = Sequential()
     model.add(Dense(neurons[0], input_dim=X.shape[1], activation=activation_functions[0]))
     for i, num in enumerate(neurons):
         if i != 0:
-            model.add(Dense(num, activation=activation_functions[0]))
-    model.add(Dense(n_div_per_day, activation=activation_functions[1]))
+            model.add(Dense(num, activation=activation_functions[i]))
+    model.add(Dense(n_div_per_day, activation=activation_functions[-1]))
 
-    rprop = RMSprop(lr=0.0001, rho=0.9, epsilon=1e-6)
+    rprop = RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-6)
     model.compile(loss='mean_squared_error', optimizer=rprop)
+    model.save_weights('model.h5')
 
     i = 0
     mse = 10000
 
     # Cross validation training using KFold
-    for train_index, test_index in KFold(n_splits=n_splits, shuffle=shuffle).split(X):
-        x_train, x_test = X[train_index], X[test_index]
-        y_train, y_test = Y[train_index], Y[test_index]
-        y_training = model.fit(x_train, y_train, epochs=500, verbose=0)
+    if check_cv:
+        for train_index, test_index in KFold(n_splits=n_splits, shuffle=shuffle).split(X):
+            x_train, x_test = X[train_index], X[test_index]
+            y_train, y_test = Y[train_index], Y[test_index]
+            model.load_weights('model.h5')
+            y_training = model.fit(x_train, y_train, epochs=500, verbose=0)
+            mse = y_training.history['loss'][-1]
+            print('KFold counter:{}\nWith n_splits={}, training_set_length={}'.format(i+1, n_splits, len(train_index)))
+            print('- mse is %.4f' % mse + ' @ ' + str(len(y_training.history['loss'])))
+            i += 1
+    else:
+        y_training = model.fit(X, Y, epochs=epochs, verbose=1)
         mse = y_training.history['loss'][-1]
-        print('KFold counter:{}\nWith n_splits={}, training_set_length={}'.format(i+1, n_splits, len(train_index)))
         print('- mse is %.4f' % mse + ' @ ' + str(len(y_training.history['loss'])))
-        i += 1
 
-    path = 'model/model_{}_mse{:.2f}/'.format(time.strftime('%m%d-%H%M'),mse)
+
+    path = 'model/model_{}_mse{:.2f}/'.format(time.strftime('%m%d-%H%M'), mse)
     os.mkdir(path)
     save_model(model, '{}model'.format(path), overwrite=False)
     file1 = open('{}info.txt'.format(path), 'x')
@@ -98,6 +112,7 @@ def test_model(model, X, Y):
 
 
 def predict_next_day(model, x):
+
     y = model.predict(x)
     if len(y) == 24:
         prediction = y

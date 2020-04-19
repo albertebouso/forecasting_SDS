@@ -17,16 +17,13 @@ def _csv_to_data(path, energy, week, start, end):
     """
     if week:
         df1 = pd.read_csv(path, header=0)
-
         if energy:
-            df1 = df1.iloc[0:672]
             df1 = df1[target_header]
             df1 = df1.to_frame()
             df = pd.date_range(start, end, freq='15T', name='time')
             df = df[:-1]
             df = df1.set_index(df, 'time')
         else:
-            df1 = df1.iloc[0:169]
             df = pd.date_range(start, end, freq='1H', name='time')
             df = df1.set_index(df, 'time')
             df = df.rename(columns={'0': 'price'})
@@ -131,11 +128,9 @@ def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
         df_solar = _csv_to_data(solar_path, True, True, start, end)
         df_wind = _csv_to_data(wind_path, True, True, start, end)
         df_belpex = _csv_to_data(price_path, False, True, start, end)
-
         df_belpex = _correct_hours(df_belpex, start, end)
         df_belpex = _resample_granularity(df_belpex, True)
         df_wind = _correct_NaN(df_wind)
-
         df_wind = df_wind[target_header]
         df_solar = df_solar[target_header]
 
@@ -155,10 +150,6 @@ def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
         data_compact = _get_dataframe(df_wind, df_solar, df_belpex)
 
     data_compact = _normalise_data(data_compact, 'belpex')
-
-    # plt.figure()
-    # data_compact.belpex.plot(grid=True)
-    # plt.show()
 
     return data_compact
 
