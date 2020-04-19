@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime as dt
 
+target_header = 'DayAheadForecast'
 
 def _csv_to_data(path, energy, week, start, end):
     """
@@ -19,7 +20,7 @@ def _csv_to_data(path, energy, week, start, end):
 
         if energy:
             df1 = df1.iloc[0:672]
-            df1 = df1.LoadFactor
+            df1 = df1[target_header]
             df1 = df1.to_frame()
             df = pd.date_range(start, end, freq='15T', name='time')
             df = df[:-1]
@@ -36,7 +37,7 @@ def _csv_to_data(path, energy, week, start, end):
         df.set_index('time', inplace=True)
 
         if energy:
-            df = df.LoadFactor
+            df = df[target_header]
 
     return df
 
@@ -135,8 +136,8 @@ def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
         df_belpex = _resample_granularity(df_belpex, True)
         df_wind = _correct_NaN(df_wind)
 
-        df_wind = df_wind['LoadFactor']
-        df_solar = df_solar['LoadFactor']
+        df_wind = df_wind[target_header]
+        df_solar = df_solar[target_header]
 
         data_compact = _get_dataframe(df_wind, df_solar, df_belpex)
 
@@ -149,6 +150,7 @@ def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
         df_belpex = _correct_hours(df_belpex, start, end)
         df_belpex = _resample_granularity(df_belpex, False)
         df_wind = _correct_NaN(df_wind)
+        df_solar = _correct_NaN(df_solar)
 
         data_compact = _get_dataframe(df_wind, df_solar, df_belpex)
 
@@ -195,7 +197,7 @@ def _create_bloxplots(data, column, attribute):
     data.boxplot(column=column, by=attribute)
 
 
-def _get_accuracy(x, y):
+def get_accuracy(x, y):
     """
     metric to define the quality of the forecast
 
