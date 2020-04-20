@@ -1,0 +1,9 @@
+<application>
+  <component name="FileTypeManager" version="17">
+    <extensionMap>
+      <mapping pattern="Week 3" type="CSV file" />
+      <mapping pattern="Week 2" type="CSV file" />
+      <mapping pattern="Week 1" type="CSV file" />
+    </extensionMap>
+  </component>
+</application>
