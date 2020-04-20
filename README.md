@@ -9,13 +9,20 @@ that has the smallest Mean Square Error (MSE) possible compared to the real pric
 of the 3 days.
 
 ## Content
-- ``main`` develops functions for Neural Networks creation, training and performance assessment
+- ``main`` calls functions from the other files in a structured way
 - ``data_manager`` develops all the functions to process, correct and standarize the solar, wind and price data
 - ``neural_network`` develops a function with the Neural Network architecture design, as well as training and testing
 
 ## Structure
 - ``/data`` contains all the .csv files provided for the assignment commitment
-- ``/model`` contains the models created by the Neural Network function
+- ``/model`` contains the models created by the Neural Network function. Each model is stored within a unique folder (format: model_date_hour_error) containing its configuration
+- ``/images`` includes outcomes and information with graphical representation 
+
+
+## Methodology
+Training and validation is done as explained in the flowchart
+
+![flowchart](images/flowchart.PNG)
 
 ## Report
 The report explain how (and why) the authors selected final features and architecture 
