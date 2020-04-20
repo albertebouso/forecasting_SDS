@@ -1,0 +1,7 @@
+random seed = 0 
+n_splits = 10 
+learning_rate = 0.001 
+neurons = [48, 42] 
+epochs = 500 
+activation_functions = ['relu', 'relu', 'linear'] 
+shuffle = False

@@ -219,11 +219,28 @@ def load_data(start_date, end_date, start_week, end_week):
     data = csv_to_dataframe(False, 'data/solar_20162017.csv', 'data/wind_20162017.csv', 'data/belpex_20162017.csv',
                             start_date, end_date)
 
-    week_1 = csv_to_dataframe(True, 'data/solar_week_1.csv', 'data/wind_week_1.csv', 'data/belpex_week_1.csv',
+    # week_1 = csv_to_dataframe(True, 'data/solar_week_1.csv', 'data/wind_week_1.csv', 'data/belpex_week_1.csv',
+    #                           start_week, end_week)
+    # week_2 = csv_to_dataframe(True, 'data/solar_week_2.csv', 'data/wind_week_2.csv', 'data/belpex_week_2.csv',
+    #                           start_week, end_week)
+    # week_3 = csv_to_dataframe(True, 'data/solar_week_3.csv', 'data/wind_week_3.csv', 'data/belpex_week_3.csv',
+    #                           start_week, end_week)
+
+    # test week with known outputs
+    week_1 = csv_to_dataframe(True,
+                              'data/test/week_1_solar_test.csv',
+                              'data/test/week_1_wind_test.csv',
+                              'data/test/week_1_belpex_test.csv',
                               start_week, end_week)
-    week_2 = csv_to_dataframe(True, 'data/solar_week_2.csv', 'data/wind_week_2.csv', 'data/belpex_week_2.csv',
+    week_2 = csv_to_dataframe(True,
+                              'data/test/week_2_solar_test.csv',
+                              'data/test/week_2_wind_test.csv',
+                              'data/test/week_2_belpex_test.csv',
                               start_week, end_week)
-    week_3 = csv_to_dataframe(True, 'data/solar_week_3.csv', 'data/wind_week_3.csv', 'data/belpex_week_3.csv',
+    week_3 = csv_to_dataframe(True,
+                              'data/test/week_3_solar_test.csv',
+                              'data/test/week_3_wind_test.csv',
+                              'data/test/week_3_belpex_test.csv',
                               start_week, end_week)
 
     return data, week_1, week_2, week_3
