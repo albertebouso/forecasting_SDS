@@ -5,15 +5,18 @@ import datetime as dt
 
 target_header = 'DayAheadForecast'
 
+
 def _csv_to_data(path, energy, week, start, end):
     """
+    converts .csv files into dataframes, with its correspoding header and time as as index
 
     :param path: Relative path to the data
     :param energy: Boolean. True if the variable is energy, False if other
     :param week: Boolean. True if its week data, False if other
     :param start: start date of the dataset
     :param end: ned date of the dataset
-    :return:
+
+    :return: dataframe
     """
     if week:
         df1 = pd.read_csv(path, header=0)
@@ -41,13 +44,13 @@ def _csv_to_data(path, energy, week, start, end):
 
 def _correct_hours(df, start, end):
     """
-    returns dataframe with price the same as previous hour when data is missing
+    correct missing or doubled hours (Seasonal change) by stablishing the price the same as previous hour
 
     :param df: dataframe that needs to be corrected
     :param start: start date of the dataset
     :param end: end date of the dataset
 
-    :return:
+    :return: dataframe
     """
     if df.columns[0] == 'time':
         dates = pd.date_range(start=start, end=end, freq='1H')
@@ -67,7 +70,8 @@ def _resample_granularity(df, week):
     resample the dataframe on a 15 minutes basis
 
     :param df: dataframe that needs to be granulated
-    :return:
+    :param week: Boolean if i
+    :return: dataframe
     """
 
     df = df.resample('15T').pad()
@@ -83,7 +87,7 @@ def _correct_NaN(df):
 
     :param df: dataframe that needs to be corrected
 
-    :return:
+    :return: dataframe
     """
     df = df.fillna(method='pad')
 
@@ -92,7 +96,7 @@ def _correct_NaN(df):
 
 def _get_dataframe(wind, solar, price):
     """
-    function which combines into an unique dataframe.
+    combines various dataframes into an unique one
     Useful commands:
     data.head(10) prints the first 10 samples
     data.tail(10) prints the last 10 samples
@@ -113,7 +117,7 @@ def _get_dataframe(wind, solar, price):
 
 def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
     """
-    function which converts 3 csv files, type week or other, into a unique variable
+    converts 3 csv files, type week or other, into a unique variable
 
     :param week: Boolean. True if csv is a week, False if not
     :param solar_path: Relative path to solar data
@@ -156,12 +160,12 @@ def csv_to_dataframe(week, solar_path, wind_path, price_path, start, end):
 
 def _normalise_data(data, column):
     """
-    function for removing outliers, based on a generic method from statistics, independent of timeseries.
+    remove outliers, based on a generic method from statistics, independent of timeseries.
 
     :param data: dataframe with with 3 columns and datatime index, based on price index
     :param data: String with column name
 
-    :return:
+    :return:dataframe
     """
     col = data[column]
     mean = col.mean()
@@ -176,13 +180,13 @@ def _normalise_data(data, column):
 
 def _create_bloxplots(data, column, attribute):
     """
-    Function for plotting the dataset in a box plot form, grouped by different attributes
+    plots the dataset in a box plot form, grouped by different attributes
 
     :param data: dataframe with with 3 columns and datatime index, based on price index
     :param column: string with the data to be analysed
     :param attribute: one of the following strings: week_days, month_days, hours, months and years
 
-    :return:
+    :return: plot
     """
     data[attribute] = data.index.weekday
     data.boxplot(column=column, by=attribute)
@@ -195,7 +199,7 @@ def get_accuracy(x, y):
     :param x:
     :param y:
 
-    :return:
+    :return: float
     """
     return np.mean(np.abs(x - y)) / np.mean(x)
 
@@ -215,11 +219,28 @@ def load_data(start_date, end_date, start_week, end_week):
     data = csv_to_dataframe(False, 'data/solar_20162017.csv', 'data/wind_20162017.csv', 'data/belpex_20162017.csv',
                             start_date, end_date)
 
-    week_1 = csv_to_dataframe(True, 'data/solar_week_1.csv', 'data/wind_week_1.csv', 'data/belpex_week_1.csv',
+    # week_1 = csv_to_dataframe(True, 'data/solar_week_1.csv', 'data/wind_week_1.csv', 'data/belpex_week_1.csv',
+    #                           start_week, end_week)
+    # week_2 = csv_to_dataframe(True, 'data/solar_week_2.csv', 'data/wind_week_2.csv', 'data/belpex_week_2.csv',
+    #                           start_week, end_week)
+    # week_3 = csv_to_dataframe(True, 'data/solar_week_3.csv', 'data/wind_week_3.csv', 'data/belpex_week_3.csv',
+    #                           start_week, end_week)
+
+    # test week with known outputs
+    week_1 = csv_to_dataframe(True,
+                              'data/test/week_1_solar_test.csv',
+                              'data/test/week_1_wind_test.csv',
+                              'data/test/week_1_belpex_test.csv',
                               start_week, end_week)
-    week_2 = csv_to_dataframe(True, 'data/solar_week_2.csv', 'data/wind_week_2.csv', 'data/belpex_week_2.csv',
+    week_2 = csv_to_dataframe(True,
+                              'data/test/week_2_solar_test.csv',
+                              'data/test/week_2_wind_test.csv',
+                              'data/test/week_2_belpex_test.csv',
                               start_week, end_week)
-    week_3 = csv_to_dataframe(True, 'data/solar_week_3.csv', 'data/wind_week_3.csv', 'data/belpex_week_3.csv',
+    week_3 = csv_to_dataframe(True,
+                              'data/test/week_3_solar_test.csv',
+                              'data/test/week_3_wind_test.csv',
+                              'data/test/week_3_belpex_test.csv',
                               start_week, end_week)
 
     return data, week_1, week_2, week_3

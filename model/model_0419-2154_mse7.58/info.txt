@@ -1,7 +1,0 @@
-random seed = 0 
-n_splits = 10 
-learning_rate = 0.0001 
-neurons = [168, 108] 
-epochs = 5000 
-activation_functions = ['relu', 'relu', 'linear'] 
-shuffle = False
