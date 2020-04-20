@@ -60,6 +60,7 @@ def create_nn_model(n_div_per_day, X, Y):
             print('KFold counter:{}\nWith n_splits={}, training_set_length={}'.format(i+1, n_splits, len(train_index)))
             print('- mse is %.4f' % mse + ' @ ' + str(len(y_training.history['loss'])))
             i += 1
+        os.remove('model.h5')
     else:
         y_training = model.fit(X, Y, epochs=epochs, verbose=1)
         mse = y_training.history['loss'][-1]

@@ -2,7 +2,7 @@ from neural_network import *
 from keras.models import load_model
 np.random.seed(seed=0)
 
-config = {'do_train': True,
+config = {'do_train': False,
           'path_to_model': 'model/model_0419-2154_mse7.58/',
           'start_date_training': dt.datetime(2016, 1, 1, 0, 0),
           'stop_date_training': dt.datetime(2017, 12, 30, 23, 45)
