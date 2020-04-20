@@ -1,5 +1,0 @@
-random seed = 0 
-n_splits =2 
-neurons = [60, 60] 
-activation functions = ['relu', 'linear'] 
-shuffle = False

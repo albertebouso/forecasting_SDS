@@ -2,6 +2,12 @@ from neural_network import *
 from keras.models import load_model
 np.random.seed(seed=0)
 
+config = {'do_train': True,
+          'path_to_model': 'model/model_0419-2154_mse7.58/',
+          'start_date_training': dt.datetime(2016, 1, 1, 0, 0),
+          'stop_date_training': dt.datetime(2017, 12, 30, 23, 45)
+}
+
 
 def getTimeSeriesTraining(x, lag_days, day_divisions, is_week):
     """
@@ -12,8 +18,10 @@ def getTimeSeriesTraining(x, lag_days, day_divisions, is_week):
     :return:
     """
     n_inputs = int((len(x) - lag_days * day_divisions) / day_divisions)
-    # if is_week:
-    #     n_inputs = 1
+
+    if is_week:
+        n_inputs = 1
+
     input_feature = np.empty([n_inputs, lag_days * day_divisions])
     a = 0
     b = lag_days * day_divisions
@@ -34,7 +42,7 @@ def generate_input(data_imported, start_time, end_time, lag_days, n_div_per_day)
     is_week = len(X) <= n_div_per_day*lag_days
     if is_week:
         X1 = getTimeSeriesTraining(X, lag_days, n_div_per_day, is_week)
-        start += dt.timedelta(days=(lag_days))
+        start += dt.timedelta(days=(lag_days-1))
         # end -= dt.timedelta(days=1)
         X2 = data_imported['solar'][start:end].values.reshape(-1, n_div_per_day)
         X3 = data_imported['wind'][start:end].values.reshape(-1, n_div_per_day)
@@ -59,48 +67,69 @@ def forecast_from_week(model, test_set, lag_days, n_div_per_day, plot_title, pat
     prediction = predict_next_day(model, week)
     belpex = test_set['belpex'][start:end].resample('1H').mean().values.reshape(-1, 24*7)
 
-    full_path = '{}/results/{}'.format(path, plot_title)
+    if not os.path.exists('{}results/'.format(path)):
+        os.mkdir('{}results/'.format(path))
+
+    full_path = '{}results/{}'.format(path, plot_title)
     np.savetxt(full_path, prediction, delimiter=",")
 
     plt.figure()
     plt.title(plot_title)
     plt.plot(t_week, belpex.flatten(), color='blue', label='Real')
-    plt.plot(t_pred, prediction, '--', color='red', label='Forecast')
+    plt.plot(t_pred, prediction, '-', color='red', label='Forecast')
     plt.legend(frameon=False)
     plt.grid(True)
+
+    return prediction
 
 
 # Initial conditions
 start_date = dt.datetime(2016, 1, 1)
 end_date = dt.datetime(2017, 12, 31)
 start_week = dt.datetime(2018, 1, 1)
-end_week = dt.datetime(2018, 1, 8)
+end_week = dt.datetime(2018, 1, 9)
 
 # Import data
 training, test_1, test_2, test_3 = load_data(start_date, end_date, start_week, end_week)
 
 # Input and output data
 n_div_per_day = 24*4
-lag_days = 7           # days
+lag_days = 7
 
 # Inputs
-start = dt.datetime(2016, 1, 1, 0, 0)
-end = dt.datetime(2017, 12, 30, 23, 45)
+start = config['start_date_training']
+end = config['stop_date_training']
 X = generate_input(training, start, end, lag_days, n_div_per_day)
 
 # Outputs
-print(end-start)
 start += dt.timedelta(days=lag_days)
 # Y = training['belpex'][start:end].resample('1H').mean().values.reshape(-1, n_div_per_day)
 Y = training['belpex'][start:end].values.reshape(-1, n_div_per_day)
 
-model, path = create_nn_model(n_div_per_day, X, Y)
-# model = load_model('model/model_0419_1341__7.73')
-test_model(model, X, Y)
+if config['do_train']:
+    model, path = create_nn_model(n_div_per_day, X, Y)
+    test_model(model, X, Y)
+else:
+    path = config['path_to_model']
+    model = load_model('{}model'.format(path))
+
+start = dt.datetime(2017, 12, 1, 0, 0)
+end = dt.datetime(2017, 12, 30, 23, 45)
+x_val = generate_input(training, start, end, lag_days, n_div_per_day)
+
+start += dt.timedelta(days=lag_days)
+y_val = training['belpex'][start:end].values.reshape(-1, n_div_per_day)
+
+test_model(model, x_val, y_val)
 
 # Predict data for weeks
-forecast_from_week(model, test_1, lag_days, n_div_per_day, 'Week 1', path)
-forecast_from_week(model, test_2, lag_days, n_div_per_day, 'Week 2', path)
-forecast_from_week(model, test_3, lag_days, n_div_per_day, 'Week 3', path)
+pred_w1 = forecast_from_week(model, test_1, lag_days, n_div_per_day, 'Week 1', path)
+pred_w2 = forecast_from_week(model, test_2, lag_days, n_div_per_day, 'Week 2', path)
+pred_w3 = forecast_from_week(model, test_3, lag_days, n_div_per_day, 'Week 3', path)
+
+print(pred_w1.shape)
+forecasts = np.concatenate((pred_w1, pred_w2, pred_w3))
+full_path = '{}results/{}'.format(path, 'Forecast_3_weeks.csv')
+np.savetxt(full_path, forecasts, delimiter=",")
 
 plt.show()
