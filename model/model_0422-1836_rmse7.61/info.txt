@@ -5,3 +5,6 @@ neurons = [168, 96]
 epochs = 250 
 activation_functions = ['relu', 'relu', 'linear'] 
 shuffle = False
+rmse in test weeks: 10.718335626773767
+rmse in test weeks: 57.56659628085376
+rmse in test weeks: 10.718335626773767
