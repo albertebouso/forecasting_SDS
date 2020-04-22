@@ -6,13 +6,15 @@ from keras.models import Sequential, save_model
 from keras.layers.core import Dense
 from keras.optimizers import RMSprop
 
+
+retrain = False
 check_cv = False
 seed = 0
 np.random.seed(seed=seed)
-learning_rate = 0.0001
+learning_rate = 0.001
 n_splits = 10
-neurons = [168, 108]
-epochs = 2000
+neurons = [216, 96]
+epochs = 250
 activation_functions = ['relu', 'relu', 'linear']  # [hidden], output
 shuffle = False
 config = 'random seed = {} \nn_splits = {} \nlearning_rate = {} ' \
@@ -54,19 +56,18 @@ def create_nn_model(n_div_per_day, X, Y):
         for train_index, test_index in KFold(n_splits=n_splits, shuffle=shuffle).split(X):
             x_train, x_test = X[train_index], X[test_index]
             y_train, y_test = Y[train_index], Y[test_index]
-            model.load_weights('model.h5')
+            if retrain: model.load_weights('model.h5')
             y_training = model.fit(x_train, y_train, epochs=500, verbose=0)
             mse = y_training.history['loss'][-1]
             print('KFold counter:{}\nWith n_splits={}, training_set_length={}'.format(i+1, n_splits, len(train_index)))
             print('- mse is %.4f' % mse + ' @ ' + str(len(y_training.history['loss'])))
             i += 1
-        os.remove('model.h5')
     else:
         y_training = model.fit(X, Y, epochs=epochs, verbose=1)
         mse = y_training.history['loss'][-1]
         print('- mse is %.4f' % mse + ' @ ' + str(len(y_training.history['loss'])))
 
-
+    os.remove('model.h5')
     path = 'model/model_{}_mse{:.2f}/'.format(time.strftime('%m%d-%H%M'), mse)
     os.mkdir(path)
     save_model(model, '{}model'.format(path), overwrite=False)
