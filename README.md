@@ -17,6 +17,7 @@ of the 3 days.
 - ``/data`` contains all the .csv files provided for the assignment commitment
 - ``/model`` contains the models created by the Neural Network function. Each model is stored within a unique folder (format: model_date_hour_error) containing its configuration
 - ``/images`` includes outcomes and information with graphical representation 
+- ``/report`` report pdf storage
 
 
 ## Methodology
@@ -27,7 +28,7 @@ Training and validation is done as explained in the flowchart
 ## Report
 The report explain how (and why) the authors selected final features and architecture 
 as well as include the figures and/or tables that were deem relevant.
-It will be available [here]().
+It will be available [here](report/report.pdf).
 
 ## Authors
 [Alberte Bouso ](mailto:alberte.bousogarcia@student.kuleuven.be)
