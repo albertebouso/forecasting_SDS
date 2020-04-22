@@ -13,8 +13,8 @@ seed = 0
 np.random.seed(seed=seed)
 learning_rate = 0.001
 n_splits = 10
-neurons = [216, 96]
-epochs = 250
+neurons = [21, 12]
+epochs = 300
 activation_functions = ['relu', 'relu', 'linear']  # [hidden], output
 shuffle = False
 config = 'random seed = {} \nn_splits = {} \nlearning_rate = {} ' \
@@ -49,7 +49,7 @@ def create_nn_model(n_div_per_day, X, Y):
     model.save_weights('model.h5')
 
     i = 0
-    mse = 10000
+    rmse = 10000
 
     # Cross validation training using KFold
     if check_cv:
@@ -58,17 +58,17 @@ def create_nn_model(n_div_per_day, X, Y):
             y_train, y_test = Y[train_index], Y[test_index]
             if retrain: model.load_weights('model.h5')
             y_training = model.fit(x_train, y_train, epochs=500, verbose=0)
-            mse = y_training.history['loss'][-1]
+            rmse = y_training.history['loss'][-1]**(0.5)
             print('KFold counter:{}\nWith n_splits={}, training_set_length={}'.format(i+1, n_splits, len(train_index)))
-            print('- mse is %.4f' % mse + ' @ ' + str(len(y_training.history['loss'])))
+            print('- rmse is %.4f' % rmse + ' @ ' + str(len(y_training.history['loss'])))
             i += 1
     else:
         y_training = model.fit(X, Y, epochs=epochs, verbose=1)
-        mse = y_training.history['loss'][-1]
-        print('- mse is %.4f' % mse + ' @ ' + str(len(y_training.history['loss'])))
+        rmse = (y_training.history['loss'][-1])**0.5
+        print('- rmse is %.4f' % rmse + ' @ ' + str(len(y_training.history['loss'])))
 
     os.remove('model.h5')
-    path = 'model/model_{}_mse{:.2f}/'.format(time.strftime('%m%d-%H%M'), mse)
+    path = 'model/model_{}_rmse{:.2f}/'.format(time.strftime('%m%d-%H%M'), rmse)
     os.mkdir(path)
     save_model(model, '{}model'.format(path), overwrite=False)
     file1 = open('{}info.txt'.format(path), 'x')
@@ -119,7 +119,7 @@ def predict_next_day(model, x):
     if len(y) == 24:
         prediction = y
     else:
-        prediction = np.empty((24,))
+        prediction = np.empty((24,))*0
         n_sections = y.shape[1]/24
         for i, value in enumerate(y[0]):
             index = int(np.floor(i/4))
