@@ -23,7 +23,7 @@ of the 3 days.
 ## Methodology
 Training and validation is done as explained in the flowchart
 
-![flowchart](documentation/flowchart.PNG)
+![flowchart](images/flowchart.PNG)
 
 ## Report
 The report explain how (and why) the authors selected final features and architecture 
