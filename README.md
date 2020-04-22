@@ -23,12 +23,12 @@ of the 3 days.
 ## Methodology
 Training and validation is done as explained in the flowchart
 
-![flowchart](images/flowchart.PNG)
+![flowchart](documentation/flowchart.PNG)
 
 ## Report
 The report explain how (and why) the authors selected final features and architecture 
 as well as include the figures and/or tables that were deem relevant.
-It will be available [here](report/report.pdf).
+It will be available [here](documentation/report.pdf).
 
 ## Authors
 [Alberte Bouso ](mailto:alberte.bousogarcia@student.kuleuven.be)
